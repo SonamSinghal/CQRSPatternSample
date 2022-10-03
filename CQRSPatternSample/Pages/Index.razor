@@ -1,0 +1,97 @@
+﻿@page "/"
+@inject MediatR.IMediator _mediatR
+
+<PageTitle>Index</PageTitle>
+
+<h1>Hello, world!</h1>
+
+Welcome to your new app.
+
+<table class="table">
+	<thead>
+		<tr>
+			<th>Name</th>
+			<th>Email</th>
+			<th></th>
+			<th></th>
+			<th></th>
+		</tr>
+	</thead>
+	@foreach(var student in Students){
+		<tr>
+			<td>@student.FirstName @student.LastName</td>
+			<td>@student.Email</td>
+			<td><a class="btn-link" @onclick="(()=>GetDetails(student.Id))">Details</a></td>
+			<td><a class="btn-link" @onclick="(()=>UpdateDetails(student.Id))">Update</a></td>
+			<td><a class="btn-link" @onclick="(()=>DeleteStudent(student.Id))">Delete</a></td>
+		</tr>
+	}
+</table>
+
+
+@if(Student != null){
+	<div class="container">
+		<div>
+			<span><b>First Name: </b> @Student.FirstName</span>
+		</div>
+		<div>
+			<span><b>Last Name: </b> @Student.LastName</span>
+		</div>
+		<div>
+			<span><b>Email: </b> @Student.Email</span>
+		</div>
+	</div>
+}
+
+@if(UpdateStudent != null){
+	<div>
+		<div>
+			<span><b>First Name: </b></span>
+			<input type="text" @bind-value="@UpdateStudent.FirstName" />
+		</div>
+		<div>
+			<span><b>Last Name: </b></span>
+			<input type="text" @bind-value="@UpdateStudent.LastName" />
+		</div>
+		<div>
+			<span><b>Email: </b></span>
+			<input type="text" @bind-value="@UpdateStudent.Email" />
+		</div>
+		<div>
+			<button @onclick="UpdateStudents">Update</button>
+		</div>
+	</div>
+}
+
+@code{
+
+	List<StudentModel> Students = new();
+	StudentModel? Student = null;
+	StudentModel? UpdateStudent = null;
+
+	protected async override Task OnInitializedAsync()
+	{
+		Students = await _mediatR.Send(new GetStudentListQuery());
+	}
+
+	public async Task GetDetails(int studentId){
+		Student = await _mediatR.Send(new GetStudentDetailsQuery(studentId));
+	}
+	public async Task UpdateDetails(int studentId)
+	{
+		UpdateStudent = await _mediatR.Send(new GetStudentDetailsQuery(studentId));
+	}
+	public async Task UpdateStudents(){
+		if(UpdateStudent!= null){
+			var response = await _mediatR.Send(new UpdateStudentCommand(UpdateStudent));
+			Students = await _mediatR.Send(new GetStudentListQuery());
+			UpdateStudent = null;
+		}
+	}
+
+	public async Task DeleteStudent(int studentId){
+		var response = await _mediatR.Send(new DeleteStudentCommand(studentId));
+		Students = await _mediatR.Send(new GetStudentListQuery());
+
+	}
+}
